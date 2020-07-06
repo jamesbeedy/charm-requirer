@@ -135,12 +135,12 @@ class TestingRequirerRelation(Object):
 
     def _on_relation_changed(self, event):
         logger.debug("################ LOGGING RELATION CHANGED ####################")
-        for relation in self.framework.model.relations['slurmd']:
-            for unit in relation.units:
-                for key in ['ingress-address', 'hostname', 'partition', 'inventory', 'default']:
-                    if not relation.data[unit].get(key):
-                        event.defer()
-                        return
+        #for relation in self.framework.model.relations['slurmd']:
+        #    for unit in relation.units:
+        #        for key in ['ingress-address', 'hostname', 'partition', 'inventory', 'default']:
+        #            if not relation.data[unit].get(key):
+        #                event.defer()
+        #                return
         self.framework.breakpoint("in-relation-changed")
 
     def _on_relation_departed(self, event):
