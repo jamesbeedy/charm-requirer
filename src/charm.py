@@ -27,15 +27,6 @@ def dict_keys_without_hyphens(a_dict):
         (key.replace('-', '_'), val) for key, val in a_dict.items())
 
 
-def get_partitions(node_data):
-    part_dict = collections.defaultdict(dict)
-    for node in node_data:
-        part_dict[node['partition']].setdefault('hosts', [])
-        part_dict[node['partition']]['hosts'].append(node['hostname'])
-        part_dict[node['partition']]['default'] = node['default']
-    return dict(part_dict)
-
-
 class RequirerRelationEvents(ObjectEvents):
     """Requirer Relation Events"""
 
@@ -79,69 +70,52 @@ class TestingRequirerRelation(Object):
         return self._partitions
 
     def get_node_data(self):
-        return self._nodes
-
-    @property
-    def _relation(self):
-        return self.framework.model.get_relation(self._relation_name)
+        return self._node_data
 
     @property
     def _partitions(self):
-        return get_partitions(self._get_all_nodes)
+        """Parses self._node_data and returns the partitions
+        with associated nodes.
+        """
+        part_dict = collections.defaultdict(dict)
+        for node in self._node_data:
+            part_dict[node['partition']].setdefault('hosts', [])
+            part_dict[node['partition']]['hosts'].append(node['hostname'])
+            part_dict[node['partition']]['default'] = node['default']
+        return dict(part_dict)
 
     @property
-    def _nodes(self):
+    def _node_data(self):
+        """Returns the node info for units for all slurmd
+        relations.
         """
-        node_info = []
+        relations = self.framework.model.relations['slurmd']
+
+        node_info_keys = [
+            'ingress-address',
+            'hostname',
+            'partition',
+            'inventory',
+            'default',
+        ]
+
+        nodes_info = list()
         for relation in relations:
             for unit in relation.units:
-                node_info.append(relation.data[unit]['node_info'])
-        return node_info
-        """
-        node_info_keys = {
-            'ingress-address', 'hostname',
-            'partition', 'inventory', 'default',
-        }
-
-        return [
-            [
-                dict_keys_without_hyphens({
+                nodes_info.append(dict_keys_without_hyphens({
                     k: relation.data[unit][k]
                     for k in node_info_keys
-                })
-                for unit in relation.units
-            ]
-            for relation in self.framework.model.relations['slurmd']
-        ]
+                }))
+        return nodes_info
 
     def _on_relation_created(self, event):
         logger.debug("################ LOGGING RELATION CREATED ####################")
-        #logger.debug(self._relation)
-        #event.relation.data[self.model.unit]['hostname'] = self.hostname
-        #event.relation.data[self.model.app]['hostname'] = self.hostname
-        #logger.debug(self._relation)
 
     def _on_relation_joined(self, event):
         logger.debug("################ LOGGING RELATION JOINED ####################")
 
-        #logger.debug(self._relation)
-        #logger.debug(event.relation.data)
-        #logger.debug("################ LOGGING EVENT DATA in RELATION JOINED ####################")
-        #logger.debug(event.relation.data[self.model.app])
-        #logger.debug(event.relation.data[self.model.unit])
-        #logger.debug("################ LOGGING SELF RELATION DATA in RELATION JOINED ####################")
-        #logger.debug(self._relation)
-        #loggevent.relation.data.geter.debug(self._relation.data)
-
     def _on_relation_changed(self, event):
         logger.debug("################ LOGGING RELATION CHANGED ####################")
-        #for relation in self.framework.model.relations['slurmd']:
-        #    for unit in relation.units:
-        #        for key in ['ingress-address', 'hostname', 'partition', 'inventory', 'default']:
-        #            if not relation.data[unit].get(key):
-        #                event.defer()
-        #                return
-        self.framework.breakpoint("in-relation-changed")
 
     def _on_relation_departed(self, event):
         logger.debug("################ LOGGING RELATION DEPARTED ####################")
