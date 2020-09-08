@@ -69,6 +69,10 @@ class TestingRequirerRelation(Object):
         web_server_port = event.relation.data[event.unit].get('port')
         logger.debug(f"################ {web_server_port} ####################")
 
+        if not (web_server_port is not None and web_server_hostname is not None):
+            event.defer()
+            return
+
     def _on_relation_departed(self, event):
         logger.debug("################ LOGGING RELATION DEPARTED ####################")
 
