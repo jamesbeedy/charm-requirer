@@ -1,88 +1,74 @@
-#! /usr/bin/env python3
-from ops.charm import CharmBase
-
-from ops.main import main
-
-
+#!/usr/bin/python3
+import subprocess
 import logging
-import socket
-import json
 
+
+from ops.charm import CharmBase
 from ops.framework import (
     Object,
     ObjectEvents,
     StoredState,
 )
+from ops.main import main
 
 
 logger = logging.getLogger()
 
 
-class RequirerRelationEvents(ObjectEvents):
+class ReverseProxyRequirerRelationEvents(ObjectEvents):
     """Requirer Relation Events"""
 
 
 class TestingRequirerRelation(Object):
 
-    on = RequirerRelationEvents()
+    on = ReverseProxyRequirerRelationEvents()
 
     def __init__(self, charm, relation_name):
         super().__init__(charm, relation_name)
 
         self._relation_name = relation_name
-        self.hostname = socket.gethostname()
 
         self.framework.observe(
-            charm.on[self._relation_name].relation_created,
+            self.on[self._relation_name].relation_created,
             self._on_relation_created
         )
 
         self.framework.observe(
-            charm.on[self._relation_name].relation_joined,
+            self.on[self._relation_name].relation_joined,
             self._on_relation_joined
         )
 
         self.framework.observe(
-            charm.on[self._relation_name].relation_changed,
+            self.on[self._relation_name].relation_changed,
             self._on_relation_changed
         )
 
         self.framework.observe(
-            charm.on[self._relation_name].relation_departed,
+            self.on[self._relation_name].relation_departed,
             self._on_relation_departed
         )
 
         self.framework.observe(
-            charm.on[self._relation_name].relation_broken,
+            self.on[self._relation_name].relation_broken,
             self._on_relation_broken
         )
 
-    @property
-    def _relation(self):
-        return self.framework.model.get_relation(self._relation_name)
-
     def _on_relation_created(self, event):
         logger.debug("################ LOGGING RELATION CREATED ####################")
-        #logger.debug(self._relation)
-        #event.relation.data[self.model.unit]['hostname'] = self.hostname
-        #event.relation.data[self.model.app]['hostname'] = self.hostname
-        #logger.debug(self._relation)
 
     def _on_relation_joined(self, event):
         logger.debug("################ LOGGING RELATION JOINED ####################")
-        #logger.debug(self._relation)
-        #logger.debug(event.relation.data)
-        #logger.debug("################ LOGGING EVENT DATA in RELATION JOINED ####################")
-        #logger.debug(event.relation.data[self.model.app])
-        #logger.debug(event.relation.data[self.model.unit])
-        #logger.debug("################ LOGGING SELF RELATION DATA in RELATION JOINED ####################")
-        #logger.debug(self._relation)
-        #logger.debug(self._relation.data)
 
     def _on_relation_changed(self, event):
         logger.debug("################ LOGGING RELATION CHANGED ####################")
-        self.framework.breakpoint('testing-requirer-on-relation-joined')
-        
+
+        # Get the data set on the relation by webserver unit.
+        web_server_hostname = event.relation.data[event.unit].get('hostname')
+        logger.debug(f"################ HOSTNAME: {web_server_hostname} ####################")
+
+        web_server_port = event.relation.data[event.unit].get('port')
+        logger.debug(f"################ {web_server_port} ####################")
+
     def _on_relation_departed(self, event):
         logger.debug("################ LOGGING RELATION DEPARTED ####################")
 
@@ -90,21 +76,52 @@ class TestingRequirerRelation(Object):
         logger.debug("################ LOGGING RELATION BROKEN ####################")
 
 
-class RequirerCharm(CharmBase):
+class ReverseProxyRequirerCharm(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
-        
-        self.slurmd_requirer = TestingRequirerRelation(self, "slurmd")
-        
-        self.framework.observe(self.on.install, self.on_install)
-        self.framework.observe(self.on.start, self.on_start)
 
-    def on_install(self, event):
-        pass
+        self._reverse_proxy = ReverseProxyRequirerRelation(self, "http")
 
-    def on_start(self, event):
-        pass
+        self.framework.observe(
+            self.on.install,
+            self._on_install
+        )
+
+        self.framework.observe(
+            self.on.start,
+            self._on_start
+        )
+
+        self.framework.observe(
+            self.on.config_changed,
+            self._on_config_changed
+        )
+
+        self.framework.observe(
+            self.on.stop,
+            self._on_stop
+        )
+
+        self.framework.observe(
+            self.on.remove,
+            self._on_remove
+        )
+
+    def _on_install(self, event):
+        logger.debug("################ LOGGING RELATION INSTALL ####################")
+
+    def _on_start(self, event):
+        logger.debug("################ LOGGING RELATION START ####################")
+
+    def _on_config_changed(self, event):
+        logger.debug("################ LOGGING RELATION CONFIG CHANGED ####################")
+
+    def _on_stop(self, event):
+        logger.debug("################ LOGGING RELATION STOP ####################")
+
+    def _on_remove(self, event):
+        logger.debug("################ LOGGING RELATION REMOVE ####################")
 
 if __name__ == "__main__":
-    main(RequirerCharm)
+    main(ReverseProxyRequirerCharm)
