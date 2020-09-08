@@ -1,5 +1,5 @@
-name: reverse-proxy
-summary: Reverse proxy
+name: provider
+summary: Provider
 maintainers:
     - Jesse <jesse@omnivector.solutions>
 description: |

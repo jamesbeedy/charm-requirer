@@ -62,13 +62,6 @@ class TestingRequirerRelation(Object):
     def _on_relation_changed(self, event):
         logger.debug("################ LOGGING RELATION CHANGED ####################")
 
-        # Get the data set on the relation by webserver unit.
-        web_server_hostname = event.relation.data[event.unit].get('hostname')
-        logger.debug(f"################ HOSTNAME: {web_server_hostname} ####################")
-
-        web_server_port = event.relation.data[event.unit].get('port')
-        logger.debug(f"################ {web_server_port} ####################")
-
     def _on_relation_departed(self, event):
         logger.debug("################ LOGGING RELATION DEPARTED ####################")
 
@@ -122,6 +115,7 @@ class ReverseProxyRequirerCharm(CharmBase):
 
     def _on_remove(self, event):
         logger.debug("################ LOGGING RELATION REMOVE ####################")
+
 
 if __name__ == "__main__":
     main(ReverseProxyRequirerCharm)
