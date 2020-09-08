@@ -62,16 +62,22 @@ class TestingRequirerRelation(Object):
     def _on_relation_changed(self, event):
         logger.debug("################ LOGGING RELATION CHANGED ####################")
 
-        # Get the data set on the relation by webserver unit.
-        web_server_hostname = event.relation.data[event.unit].get('hostname')
-        logger.debug(f"################ HOSTNAME: {web_server_hostname} ####################")
+        # Get the related applications on the other side of the relation.
+        relations = self.framework.model.relations['http']
 
-        web_server_port = event.relation.data[event.unit].get('port')
-        logger.debug(f"################ {web_server_port} ####################")
+        # Iterate over the related applications grabbing the hostname and port from each
+        # unit of each application on the relation.
+        for relation in relations:
 
-        if not (web_server_port is not None and web_server_hostname is not None):
-            event.defer()
-            return
+            for unit in relation.units:
+
+                unit_data = relation.data[unit]
+
+                web_server_hostname = unit_data.get('hostname')
+                logger.debug(f"################ HOSTNAME: {web_server_hostname} ####################")
+
+                web_server_port = unit_data.get('port')
+                logger.debug(f"################ {web_server_port} ####################")
 
     def _on_relation_departed(self, event):
         logger.debug("################ LOGGING RELATION DEPARTED ####################")
